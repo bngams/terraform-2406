@@ -65,6 +65,33 @@ jobs:
     - name: Terraform Ouputs
       working-directory: ./8.aws-ec2
       run: terraform output instance_public_ip
+
+    - name: Terraform Inventory
+      working-directory: ./8.aws-ec2
+      run: terraform output -raw instance_public_ip | awk '{ print "all:\n  hosts:\n    webserver:\n      ansible_host: " $1 "\n      ansible_user: ubuntu\n      ansible_become: true\n      ansible_ssh_private_key_file: ./secrets/my-key.pem" }' > ./ansible/my-inventory.yml
+
+    - name: Secret SSH to File
+      # You may pin to the exact commit or the version.
+      # uses: MobileDevOps/secret-to-file-action@be5f14e82c235ccde011f6ab0f6c984b35dc34c6
+      uses: MobileDevOps/secret-to-file-action@v1.0.0
+      with:
+        # Base64 encoded content for the file
+        base64-encoded-secret: ${{ secrets.SSH_PEM }}
+        # Name of the file for the content
+        filename: my-key.pem
+        # is-executable: true
+        # Folder path for the created file
+        working-directory: ./8.aws-ec2/ansible/secrets
+
+    - name: Ansible
+      # You may pin to the exact commit or the version.
+      # uses: alex-oleshkevich/setup-ansible@f879ce3cf11a7315e130919a797526b0c6bfd272
+      uses: alex-oleshkevich/setup-ansible@v1.0.1
+      # with:
+      #   # The version of Ansible to install.
+      #   version: 
+      working-directory: ./8.aws-ec2/ansible
+      run: ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook -i my-inventory.yml playbook.yaml
     
     - name: Terraform Destroy
       working-directory: ./8.aws-ec2
