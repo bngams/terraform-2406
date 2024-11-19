@@ -68,7 +68,11 @@ jobs:
 
     - name: Terraform Inventory
       working-directory: ./8.aws-ec2
-      run: terraform output -raw instance_public_ip | awk '{ print "all:\n  hosts:\n    webserver:\n      ansible_host: " $1 "\n      ansible_user: ubuntu\n      ansible_become: true\n      ansible_ssh_private_key_file: ./secrets/my-key.pem" }' > ./ansible/my-inventory.yml
+      run: |
+        terraform output -raw instance_public_ip | awk '
+          {
+            print "all:\n  hosts:\n    webserver:\n      ansible_host: " $1 "\n      ansible_user: ubuntu\n      ansible_become: true\n      ansible_ssh_private_key_file: ./secrets/my-key.pem"
+          }' > ../ansible/my-inventory.yml
 
     - name: Secret SSH to File
       # You may pin to the exact commit or the version.
